@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+  labels:
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb # this will allow for us to select the pods that we want to deploy
+  template: # this is the template for the pods
+    metadata:
+      labels:
+        app: mongodb # this will allow for us to select the pods that we want to deploy
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo # default docker image for mongo
+          ports:
+            - containerPort: 27017
+          env: # reference username/passkey from secret within the env
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: mongo-root-password
+
+---
+# above hyphens denote a separator that separates the yaml file into multiple documents
+# each document is a separate kubernetes object
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  labels:
+    app: mongodb
+spec:
+  ports:
+    - port: 27017 # external port 
+      targetPort: 27017 # internal port
+  selector:
+    app: mongodb # connects us to our pod from above 
+              
